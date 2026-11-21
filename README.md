@@ -31,15 +31,15 @@ Push and pull request builds upload a debug APK as a GitHub Actions artifact onl
 
 UU Feed cannot search until it has a key. The first launch opens setup when none is saved and none was baked in at build time.
 
-1. Create a [Google Cloud](https://console.cloud.google.com/) project and attach a billing account. Places will not answer without billing. Light personal use stays inside the free monthly allowance.
-2. Enable **Places API (New)**. The older product named Places API is a different API.
+1. Create a [Google Cloud](https://console.cloud.google.com/) project and attach a billing account. Places will not answer without billing. Light personal use stays inside the free monthly allowance. Some new billing accounts have to prepay before Google turns an API on. Older projects usually do not.
+2. Enable **Places API (New)**, or, on an older project, **Places API** (the legacy product, `maps.googleapis.com`). A key often works with only one of them. New Google projects cannot enable the legacy API.
 3. Create an API key under APIs & Services → Credentials.
-4. Optional: restrict the key to Android apps. Package name `au.com.uulabs.uufeed`. SHA-1 is on the setup screen (there is a copy button). Also restrict the API to Places API (New) only.
-5. In the app, tap **Open Google Cloud**. That opens the Places API (New) library page.
-6. Paste the key and tap **Test key**. A successful test is one small call that asks only for place IDs.
-7. Tap **Save and continue**. The key is stored with EncryptedSharedPreferences and is not committed anywhere.
+4. Optional: restrict the key to Android apps. Package name `au.com.uulabs.uufeed`. SHA-1 is on the setup screen (there is a copy button). If you also restrict which APIs the key can call, allow the one you enabled.
+5. In the app, tap **Open Places API (New)** or **Open legacy Places API**.
+6. Paste the key and tap **Test key**. The test tries Places API (New) first. If Google answers `PERMISSION_DENIED` or that the API is not enabled, it tries the legacy API. A successful test says which one it is using, for example "Using Google Places (legacy)".
+7. Tap **Save and continue**. The key, and which API accepted it, is stored with EncryptedSharedPreferences and is not committed anywhere.
 
-Change or clear it later from the settings icon on the main screen. A key you save on the phone is used instead of any key that was compiled into the app.
+Change, retest, or clear it later from the settings icon on the main screen. Retesting can switch the saved API if the key's access changed. A key you save on the phone is used instead of any key that was compiled into the app.
 
 ### What it costs
 
@@ -52,7 +52,9 @@ Prices are Google's published first-band list prices in USD, after the free mont
 | Place Details | Opening a place, because reviews are requested | Enterprise + Atmosphere | 1,000 | $25 |
 | Place Photo | Each photo the app loads | Place Details Photos | 1,000 | $7 |
 
-A normal "find five" is one Text Search. **Five more** does not call Google again when the places already fetched still include unseen matches. If they don't, UU Feed may request up to three more pages, then a wider radius, and it stops after four Places calls per tap. Opening a place is one Details call. Five thumbnails are separate photo charges. Reviews are not requested on the search.
+A normal "find five" is one Text Search on Places API (New), or one Nearby Search on the legacy API. **Five more** does not call Google again when the places already fetched still include unseen matches. If they don't, UU Feed may request up to three more pages, then a wider radius, and it stops after four Places calls per tap. Opening a place is one Details call. Five thumbnails are separate photo charges. Reviews are not requested on the search.
+
+The prices in the table are for Places API (New). A legacy key is billed on the older Places SKUs (Nearby Search, Place Details, Place Photo). Check the same pricing page. Legacy Place Details is requested with `reviews_sort=newest`, so those five reviews are the most recent ones. Places API (New) still has no newest-first parameter.
 
 Place details and photo bytes are not written to disk.
 
@@ -94,7 +96,7 @@ Debug builds include a **Demo places** switch with invented places, reviews, and
 
 ## Limitations
 
-- Google returns **at most five reviews**, ordered by relevance. There is no newest-first parameter. UU Feed sorts those five by `publishTime`. A review with no timestamp sinks to the bottom. This is not a full feed of the newest reviews. Review photos are not in the API. Author profile photos are shown when Google sends them.
+- Google returns **at most five reviews**. Places API (New) orders them by relevance and has no newest-first parameter, so UU Feed sorts that batch by `publishTime`. The legacy Places API is asked for `reviews_sort=newest`, so those five are the most recent. A review with no timestamp sinks to the bottom. This is not a full feed of every review. Review photos are not in the API. Author profile photos are shown when Google sends them.
 - Text Search location bias is not a hard circle, so the radius is enforced on the phone. A place with no hours flag is kept, because the query already asked for open places.
 - A budget other than Any hides places with no price level.
 - The device geocoder turns a typed suburb into coordinates. It is not a billed Geocoding call.

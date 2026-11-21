@@ -62,8 +62,9 @@ private fun <T> Response<T>.bodyOrThrow(json: Json): T {
     val parsed = runCatching { json.decodeFromString(GoogleErrorEnvelope.serializer(), raw) }.getOrNull()
     val message = parsed?.error?.message ?: "Places request failed (${code()})."
     val hint = when (code()) {
-        400 -> " Check that Places API (New) is enabled for this key."
+        400 -> " Check that Places API (New) is enabled for this key. Test the key again in Settings if this project only has the legacy Places API."
         403 -> " Check the key, billing, and that Places API (New) is enabled. " +
+            "Test the key again in Settings if this project only has the legacy Places API. " +
             "If the key is restricted to Android apps, the package is au.com.uulabs.uufeed and the SHA-1 " +
             "must match this build (./gradlew signingReport)."
         429 -> " The quota for this key is used up."

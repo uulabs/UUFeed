@@ -125,6 +125,10 @@ data class PlacePhoto(
         if (name.startsWith("android.resource://") || name.startsWith("http://") || name.startsWith("https://")) {
             return name
         }
+        if (name.startsWith("legacy:")) {
+            val reference = name.removePrefix("legacy:")
+            return "https://maps.googleapis.com/maps/api/place/photo?maxwidth=$maxWidthPx&photo_reference=$reference"
+        }
         return "https://places.googleapis.com/v1/${name.trimStart('/')}/media?maxWidthPx=$maxWidthPx"
     }
 }

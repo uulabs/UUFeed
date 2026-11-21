@@ -3,6 +3,7 @@ package au.com.uulabs.uufeed.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import au.com.uulabs.uufeed.data.KeyTestResult
+import au.com.uulabs.uufeed.data.PlacesBackend
 import au.com.uulabs.uufeed.data.PlacesKeyStore
 import au.com.uulabs.uufeed.data.PlacesKeyTester
 import au.com.uulabs.uufeed.data.PlacesRepository
@@ -65,6 +66,7 @@ data class FeedUiState(
     val keyTesting: Boolean = false,
     val keyTestMessage: String? = null,
     val keyTestOk: Boolean = false,
+    val placesBackendLabel: String? = null,
 )
 
 sealed interface FeedEvent {
@@ -82,6 +84,8 @@ class FeedViewModel(
 
     private val _events = MutableSharedFlow<FeedEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
+    private var testedKey: String? = null
+    private var testedBackend: PlacesBackend? = null
 
     init {
         refreshKeyStatus()
@@ -93,8 +97,41 @@ class FeedViewModel(
         viewModelScope.launch {
             _state.update { it.copy(keyTesting = true, keyTestMessage = null, keyTestOk = false) }
             when (val result = keyTester.test(raw)) {
-                is KeyTestResult.Success -> _state.update {
-                    it.copy(keyTesting = false, keyTestOk = true, keyTestMessage = result.message)
+                is KeyTestResult.Success -> {
+                    testedKey = raw.trim()
+                    testedBackend = result.backend
+                    _state.update {
+                        it.copy(keyTesting = false, keyTestOk = true, keyTestMessage = result.message)
+                    }
+                }
+                is KeyTestResult.Failed -> {
+                    testedKey = null
+                    testedBackend = null
+                    _state.update {
+                        it.copy(keyTesting = false, keyTestOk = false, keyTestMessage = result.message)
+                    }
+                }
+            }
+        }
+    }
+
+    fun retestSavedKey() {
+        val key = keys.resolve()
+        if (key.isBlank()) return
+        viewModelScope.launch {
+            _state.update { it.copy(keyTesting = true, keyTestMessage = null, keyTestOk = false) }
+            when (val result = keyTester.test(key)) {
+                is KeyTestResult.Success -> {
+                    val userKey = keys.readUserKey()
+                    if (userKey.isNullOrBlank()) {
+                        keys.saveBackend(result.backend)
+                    } else {
+                        keys.save(userKey, result.backend)
+                    }
+                    refreshKeyStatus()
+                    _state.update {
+                        it.copy(keyTesting = false, keyTestOk = true, keyTestMessage = result.message)
+                    }
                 }
                 is KeyTestResult.Failed -> _state.update {
                     it.copy(keyTesting = false, keyTestOk = false, keyTestMessage = result.message)
@@ -104,7 +141,11 @@ class FeedViewModel(
     }
 
     fun savePlacesKey(raw: String) {
-        keys.save(raw)
+        val trimmed = raw.trim()
+        val backend = testedBackend.takeIf { testedKey == trimmed }
+        keys.save(trimmed, backend)
+        testedKey = null
+        testedBackend = null
         refreshKeyStatus()
         _state.update { it.copy(keyTesting = false, keyTestMessage = null, keyTestOk = false) }
     }
@@ -124,6 +165,7 @@ class FeedViewModel(
                 buildKeyPresent = status.buildKeyPresent,
                 maskedKey = status.maskedUserKey,
                 signingSha1 = keys.signingSha1,
+                placesBackendLabel = keys.readBackend()?.label,
             )
         }
     }

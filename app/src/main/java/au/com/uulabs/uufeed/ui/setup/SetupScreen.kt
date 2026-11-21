@@ -45,13 +45,14 @@ import androidx.compose.ui.unit.dp
 import au.com.uulabs.uufeed.ui.FeedUiState
 import au.com.uulabs.uufeed.ui.FeedViewModel
 
-private const val PLACES_CONSOLE = "https://console.cloud.google.com/apis/library/places.googleapis.com"
+private const val PLACES_NEW = "https://console.cloud.google.com/apis/library/places.googleapis.com"
+private const val PLACES_LEGACY = "https://console.cloud.google.com/apis/library/places-backend.googleapis.com"
 
 private val steps = listOf(
-    "Create a Google Cloud project and attach a billing account. Places will not answer without billing. Light personal use stays inside the free monthly allowance.",
-    "Enable Places API (New). The older product named Places API is a different API and will not work here.",
+    "Create a Google Cloud project and attach a billing account. Places will not answer without billing. Light personal use stays inside the free monthly allowance. Some new billing accounts have to prepay before Google turns an API on. Older projects usually do not.",
+    "Enable Places API (New), or, on an older project, Places API (the legacy one). A key often works with only one of those. UU Feed tries New first, then legacy, and tells you which one it is using.",
     "Create an API key under APIs & Services → Credentials.",
-    "Optional, and a good idea: restrict the key to Android apps. Use the package name and SHA-1 on this screen. Restrict the API to Places API (New) only.",
+    "Optional, and a good idea: restrict the key to Android apps. Use the package name and SHA-1 on this screen. If you also restrict which APIs the key can call, allow the one you enabled.",
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -109,14 +110,16 @@ fun SetupScreen(
                     }
                 }
                 OutlinedButton(
-                    onClick = {
-                        runCatching {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PLACES_CONSOLE)))
-                        }
-                    },
+                    onClick = { open(context, PLACES_NEW) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Open Google Cloud")
+                    Text("Open Places API (New)")
+                }
+                OutlinedButton(
+                    onClick = { open(context, PLACES_LEGACY) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Open legacy Places API")
                 }
                 Surface(
                     shape = MaterialTheme.shapes.medium,
@@ -204,7 +207,7 @@ fun SetupScreen(
                     Text(if (state.keyTestOk) "Save and continue" else "Save without testing")
                 }
                 Text(
-                    "A key test is one small Places call that asks only for place IDs. Everyday searches cost more once you are past the free monthly allowance. Details are in the README.",
+                    "Test key tries Places API (New) with a call that asks only for place IDs. If that product is not enabled, it tries one small legacy Nearby Search. A successful test says which API it is using. Everyday searches cost more once you are past the free monthly allowance. Details are in the README.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -215,5 +218,11 @@ fun SetupScreen(
                 }
             }
         }
+    }
+}
+
+private fun open(context: android.content.Context, url: String) {
+    runCatching {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     }
 }

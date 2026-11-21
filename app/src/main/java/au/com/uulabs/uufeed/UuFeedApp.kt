@@ -15,6 +15,8 @@ import au.com.uulabs.uufeed.data.PlacesKeyStore
 import au.com.uulabs.uufeed.data.PlacesKeyTester
 import au.com.uulabs.uufeed.data.PlacesRepository
 import au.com.uulabs.uufeed.data.RetrofitPlacesClient
+import au.com.uulabs.uufeed.data.SelectedPlacesClient
+import au.com.uulabs.uufeed.data.legacy.LegacyPlacesSource
 import au.com.uulabs.uufeed.demo.demoPlacesClient
 import au.com.uulabs.uufeed.domain.SuggestionSession
 import au.com.uulabs.uufeed.location.DeviceLocation
@@ -89,7 +91,18 @@ class AppGraph(context: Context) {
 
     val repository = PlacesRepository(
         client = ActivePlacesClient(
-            live = RetrofitPlacesClient(api, { keyStore.resolve() }, json),
+            live = SelectedPlacesClient(
+                modern = RetrofitPlacesClient(api, { keyStore.resolve() }, json),
+                legacy = LegacyPlacesSource(
+                    http = okHttp,
+                    apiKey = { keyStore.resolve() },
+                    packageName = appContext.packageName,
+                    certSha1 = keyStore.signingSha1,
+                    json = json,
+                ),
+                keys = keyStore,
+                tester = keyTester,
+            ),
             demo = demoPlacesClient(),
         ),
         session = SuggestionSession(),

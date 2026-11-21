@@ -35,6 +35,7 @@ fun SettingsScreen(
     state: FeedUiState,
     onBack: () -> Unit,
     onReplace: () -> Unit,
+    onRetest: () -> Unit,
     onClear: () -> Unit,
 ) {
     var confirmClear by rememberSaveable { mutableStateOf(false) }
@@ -70,6 +71,34 @@ fun SettingsScreen(
             )
             state.maskedKey?.let { masked ->
                 Text(masked, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
+            state.placesBackendLabel?.let { label ->
+                Text(label, style = MaterialTheme.typography.bodyLarge)
+            }
+            if (state.hasPlacesKey) {
+                OutlinedButton(
+                    onClick = onRetest,
+                    enabled = !state.keyTesting,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (state.keyTesting) "Testing…" else "Test key again")
+                }
+                Text(
+                    "A retest tries Places API (New) first. If that product is not enabled, it tries the legacy Places API and switches to whichever one accepts the key.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            state.keyTestMessage?.let { message ->
+                Text(
+                    message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (state.keyTestOk) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
             }
             Button(onClick = onReplace, modifier = Modifier.fillMaxWidth()) {
                 Text(if (state.hasPlacesKey) "Change key" else "Add a key")

@@ -182,4 +182,5 @@ dependencies {
     implementation(libs.security.crypto)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockwebserver)
 }

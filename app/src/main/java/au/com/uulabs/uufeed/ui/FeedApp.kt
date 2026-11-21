@@ -68,6 +68,7 @@ fun FeedApp(viewModel: FeedViewModel) {
                 state = state,
                 onBack = { navController.popBackStack() },
                 onReplace = { navController.navigate(Routes.Setup) },
+                onRetest = { viewModel.retestSavedKey() },
                 onClear = {
                     viewModel.clearPlacesKey()
                     if (!viewModel.hasPlacesKey()) {

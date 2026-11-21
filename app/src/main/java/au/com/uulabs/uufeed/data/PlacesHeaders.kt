@@ -14,12 +14,18 @@ class PlacesHeaders(
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        if (!request.url.host.equals("places.googleapis.com", ignoreCase = true)) {
+        val host = request.url.host
+        val placesNew = host.equals("places.googleapis.com", ignoreCase = true)
+        val placesLegacy = host.equals("maps.googleapis.com", ignoreCase = true)
+        if (!placesNew && !placesLegacy) {
             return chain.proceed(request)
         }
         val builder = request.newBuilder()
         val key = apiKey().trim()
-        if (key.isNotBlank()) builder.header("X-Goog-Api-Key", key)
+        if (placesNew && key.isNotBlank()) builder.header("X-Goog-Api-Key", key)
+        if (placesLegacy && key.isNotBlank() && request.url.queryParameter("key").isNullOrBlank()) {
+            builder.url(request.url.newBuilder().addQueryParameter("key", key).build())
+        }
         if (packageName.isNotBlank()) builder.header("X-Android-Package", packageName)
         if (certSha1.isNotBlank()) builder.header("X-Android-Cert", certSha1)
         return chain.proceed(builder.build())

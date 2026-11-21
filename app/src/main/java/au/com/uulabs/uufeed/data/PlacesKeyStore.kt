@@ -39,14 +39,31 @@ class PlacesKeyStore(
 
     fun resolve(): String = status().activeKey.orEmpty()
 
-    fun save(raw: String) {
+    fun readBackend(): PlacesBackend? = PlacesBackend.fromStorage(prefs.getString(BACKEND, null))
+
+    fun save(raw: String, backend: PlacesBackend? = null) {
         val trimmed = raw.trim()
         require(trimmed.isNotEmpty()) { "Paste a key first." }
-        prefs.edit().putString(KEY, trimmed).apply()
+        prefs.edit()
+            .putString(KEY, trimmed)
+            .putBackend(backend)
+            .apply()
+    }
+
+    fun saveBackend(backend: PlacesBackend) {
+        prefs.edit().putString(BACKEND, backend.storageValue).apply()
     }
 
     fun clear() {
-        prefs.edit().remove(KEY).apply()
+        prefs.edit().remove(KEY).remove(BACKEND).apply()
+    }
+
+    private fun android.content.SharedPreferences.Editor.putBackend(
+        backend: PlacesBackend?,
+    ): android.content.SharedPreferences.Editor = if (backend == null) {
+        remove(BACKEND)
+    } else {
+        putString(BACKEND, backend.storageValue)
     }
 
     private fun encryptedPrefs(context: Context): SharedPreferences {
@@ -65,5 +82,6 @@ class PlacesKeyStore(
     private companion object {
         const val FILE = "uufeed_secrets"
         const val KEY = "places_api_key"
+        const val BACKEND = "places_backend"
     }
 }
