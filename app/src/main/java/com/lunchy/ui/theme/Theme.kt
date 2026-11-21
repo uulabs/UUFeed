@@ -1,13 +1,15 @@
 package com.lunchy.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -21,65 +23,50 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.lunchy.R
 
-private val Chili = Color(0xFF9C3418)
-private val ChiliDark = Color(0xFF5C1C0C)
-private val Cream = Color(0xFFF6F0E6)
-private val Paper = Color(0xFFFFFBF6)
-private val Ink = Color(0xFF1E1914)
-private val Sage = Color(0xFF1F6B4A)
-private val Saffron = Color(0xFFC47B2B)
-private val CreamDeep = Color(0xFFE7DCCB)
-
-private val LightColors = lightColorScheme(
-    primary = Chili,
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFF6D7CC),
-    onPrimaryContainer = ChiliDark,
-    secondary = Sage,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD5EADF),
-    onSecondaryContainer = Color(0xFF0E3A28),
-    tertiary = Saffron,
-    onTertiary = Color(0xFF2A1800),
-    tertiaryContainer = Color(0xFFF8E3C4),
-    onTertiaryContainer = Color(0xFF3D2604),
-    background = Cream,
-    onBackground = Ink,
-    surface = Paper,
-    onSurface = Ink,
-    surfaceVariant = CreamDeep,
-    onSurfaceVariant = Color(0xFF51473E),
-    outline = Color(0xFFD2C4B2),
-    error = Color(0xFF9B2335),
-    onError = Color.White,
-    errorContainer = Color(0xFFF8D5DB),
-    onErrorContainer = Color(0xFF4A0C16),
-)
+private val Night = Color(0xFF100E16)
+private val NightRaised = Color(0xFF1C1728)
+private val Ink = Color(0xFFF4F0FA)
+private val InkMuted = Color(0xFFC9BEDD)
+private val Violet = Color(0xFF7048E8)
+private val VioletDeep = Color(0xFF3A2878)
+private val Lilac = Color(0xFFD8CCFF)
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFF0A48C),
-    onPrimary = Color(0xFF3F140A),
-    primaryContainer = Color(0xFF6E2A18),
-    onPrimaryContainer = Color(0xFFFFD8CC),
-    secondary = Color(0xFF8FCBB0),
-    onSecondary = Color(0xFF083224),
-    secondaryContainer = Color(0xFF1C4A36),
-    onSecondaryContainer = Color(0xFFD5EADF),
-    tertiary = Color(0xFFE6B36A),
-    onTertiary = Color(0xFF3A2504),
-    tertiaryContainer = Color(0xFF5A3E14),
-    onTertiaryContainer = Color(0xFFF8E3C4),
-    background = Color(0xFF14110E),
-    onBackground = Color(0xFFF6F0E6),
-    surface = Color(0xFF1F1A16),
-    onSurface = Color(0xFFF6F0E6),
-    surfaceVariant = Color(0xFF3A322B),
-    onSurfaceVariant = Color(0xFFD9CBBA),
-    outline = Color(0xFF6E6256),
-    error = Color(0xFFFFB3BE),
-    onError = Color(0xFF4A0C16),
-    errorContainer = Color(0xFF6E2230),
-    onErrorContainer = Color(0xFFF8D5DB),
+    primary = Violet,
+    onPrimary = Color.White,
+    primaryContainer = VioletDeep,
+    onPrimaryContainer = Color(0xFFEDE7FF),
+    secondary = Lilac,
+    onSecondary = Color(0xFF1C1033),
+    secondaryContainer = Violet,
+    onSecondaryContainer = Color.White,
+    tertiary = Lilac,
+    onTertiary = Color(0xFF1C1033),
+    tertiaryContainer = Color(0xFF2A2144),
+    onTertiaryContainer = Color(0xFFEDE7FF),
+    background = Night,
+    onBackground = Ink,
+    surface = NightRaised,
+    onSurface = Ink,
+    surfaceVariant = Color(0xFF322A44),
+    onSurfaceVariant = InkMuted,
+    surfaceTint = Violet,
+    outline = Color(0xFF7A7090),
+    outlineVariant = Color(0xFF453C58),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    inverseSurface = Ink,
+    inverseOnSurface = Night,
+    inversePrimary = VioletDeep,
+    surfaceDim = Night,
+    surfaceBright = Color(0xFF3A334C),
+    surfaceContainerLowest = Color(0xFF0B0910),
+    surfaceContainerLow = Color(0xFF161221),
+    surfaceContainer = Color(0xFF1C1728),
+    surfaceContainerHigh = Color(0xFF261F36),
+    surfaceContainerHighest = Color(0xFF322A44),
 )
 
 private val Fraunces = FontFamily(
@@ -121,8 +108,20 @@ private val LunchShapes = Shapes(
 
 @Composable
 fun LunchyTheme(content: @Composable () -> Unit) {
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as Activity).window
+            val bars = android.graphics.Color.parseColor("#100E16")
+            window.statusBarColor = bars
+            window.navigationBarColor = bars
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+        }
+    }
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors,
+        colorScheme = DarkColors,
         typography = LunchTypography,
         shapes = LunchShapes,
         content = content,

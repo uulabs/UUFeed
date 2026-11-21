@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -34,6 +35,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -165,16 +167,26 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text("Where", style = MaterialTheme.typography.titleLarge)
+                        val locationColors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.primary,
+                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            inactiveContainerColor = MaterialTheme.colorScheme.surface,
+                            inactiveContentColor = MaterialTheme.colorScheme.onSurface,
+                            activeBorderColor = MaterialTheme.colorScheme.primary,
+                            inactiveBorderColor = MaterialTheme.colorScheme.outline,
+                        )
                         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                             SegmentedButton(
                                 selected = state.locationMode == LocationMode.DEVICE,
                                 onClick = { viewModel.setLocationMode(LocationMode.DEVICE) },
                                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+                                colors = locationColors,
                             ) { Text("This device") }
                             SegmentedButton(
                                 selected = state.locationMode == LocationMode.MANUAL,
                                 onClick = { viewModel.setLocationMode(LocationMode.MANUAL) },
                                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+                                colors = locationColors,
                             ) { Text("A suburb") }
                         }
                         if (state.demoEnabled || state.locationMode == LocationMode.DEVICE) {
@@ -255,14 +267,32 @@ fun HomeScreen(
                                 viewModel.setRadius(snapped)
                             },
                             valueRange = 0.5f..25f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = MaterialTheme.colorScheme.primary,
+                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            ),
                         )
                         Text("Minimum rating", style = MaterialTheme.typography.titleSmall)
+                        val chipColors = FilterChipDefaults.filterChipColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = MaterialTheme.colorScheme.onSurface,
+                            selectedContainerColor = MaterialTheme.colorScheme.primary,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                        )
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             ratingOptions.forEach { (value, label) ->
                                 FilterChip(
                                     selected = state.minRating == value,
                                     onClick = { viewModel.setMinRating(value) },
                                     label = { Text(label) },
+                                    colors = chipColors,
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = state.minRating == value,
+                                        borderColor = MaterialTheme.colorScheme.outline,
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                    ),
                                 )
                             }
                         }
@@ -282,6 +312,13 @@ fun HomeScreen(
                                     selected = state.budget == budget,
                                     onClick = { viewModel.setBudget(budget) },
                                     label = { Text(budget.chip) },
+                                    colors = chipColors,
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = state.budget == budget,
+                                        borderColor = MaterialTheme.colorScheme.outline,
+                                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                                    ),
                                 )
                             }
                         }
