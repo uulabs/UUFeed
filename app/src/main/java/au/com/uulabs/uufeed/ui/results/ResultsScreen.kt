@@ -7,7 +7,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import au.com.uulabs.uufeed.domain.searchingWithin
 import au.com.uulabs.uufeed.ui.FeedUiState
 import au.com.uulabs.uufeed.ui.FeedViewModel
 import au.com.uulabs.uufeed.ui.Phase
@@ -62,7 +65,16 @@ fun ResultsScreen(
                             .fillMaxWidth()
                             .padding(16.dp),
                     ) {
-                        Text(if (state.results.isEmpty()) "Look further" else "Five more")
+                        if (searching) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                            Text("Looking…", modifier = Modifier.padding(start = 8.dp))
+                        } else {
+                            Text(if (state.results.isEmpty()) "Look further" else "Five more")
+                        }
                     }
                 }
             }
@@ -83,8 +95,13 @@ fun ResultsScreen(
             ) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (state.summary.isNotBlank()) {
-                            Text(state.summary, style = MaterialTheme.typography.titleMedium)
+                        val headline = if (searching) {
+                            searchingWithin(state.radiusKm.toDouble(), state.searchAnchor)
+                        } else {
+                            state.summary
+                        }
+                        if (headline.isNotBlank()) {
+                            Text(headline, style = MaterialTheme.typography.titleMedium)
                         }
                         Text(
                             if (state.demoEnabled) {
@@ -102,6 +119,17 @@ fun ResultsScreen(
                 }
                 state.error?.let { error ->
                     item { Banner(error, container = MaterialTheme.colorScheme.errorContainer, content = MaterialTheme.colorScheme.onErrorContainer) }
+                }
+                if (searching && state.results.isNotEmpty()) {
+                    item {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                            Text("Checking who's open…", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
                 }
                 if (searching && state.results.isEmpty()) {
                     items(5) {
@@ -140,6 +168,7 @@ fun ResultsScreen(
                             place = place,
                             origin = state.origin,
                             onClick = { onOpen(place.id) },
+                            modifier = Modifier.animateItem(),
                         )
                     }
                 }

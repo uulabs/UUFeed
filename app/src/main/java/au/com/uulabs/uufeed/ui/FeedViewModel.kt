@@ -15,6 +15,7 @@ import au.com.uulabs.uufeed.domain.PlaceDetails
 import au.com.uulabs.uufeed.domain.filledFrom
 import au.com.uulabs.uufeed.domain.SearchFilters
 import au.com.uulabs.uufeed.domain.SearchNotices
+import au.com.uulabs.uufeed.domain.searchAnchor
 import au.com.uulabs.uufeed.location.DeviceLocation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -64,6 +65,7 @@ data class FeedUiState(
     val buildKeyPresent: Boolean = false,
     val maskedKey: String? = null,
     val signingSha1: String = "",
+    val searchAnchor: String = "your location",
     val keyTesting: Boolean = false,
     val keyTestMessage: String? = null,
     val keyTestOk: Boolean = false,
@@ -298,12 +300,19 @@ class FeedViewModel(
         if (searchJob?.isActive == true) return
         searchJob = viewModelScope.launch {
             val snapshot = _state.value
-            _state.update { it.copy(phase = Phase.Searching, error = null) }
+            _state.update {
+                it.copy(
+                    phase = Phase.Searching,
+                    error = null,
+                    searchAnchor = if (again && it.searchAnchor.isNotBlank()) it.searchAnchor else it.liveAnchor(),
+                )
+            }
             if (!again) _events.emit(FeedEvent.ShowResults)
             val resolved = resolveQuery(again, snapshot) ?: return@launch
             val (filters, origin) = resolved
             committedFilters = filters
             committedOrigin = origin
+            val anchor = _state.value.searchAnchor
             try {
                 val outcome = repository.load(filters, origin)
                 _state.update {
@@ -313,7 +322,8 @@ class FeedViewModel(
                         results = outcome.places,
                         notice = SearchNotices.message(outcome),
                         canSearchAgain = outcome.canSearchAgain,
-                        summary = filters.summary(),
+                        summary = filters.summary(anchor),
+                        searchAnchor = anchor,
                         error = null,
                     )
                 }
@@ -353,7 +363,13 @@ class FeedViewModel(
                 fail("Couldn't find \"$query\". Try a suburb and a city, like Braddon, Canberra.")
                 return null
             }
-            _state.update { it.copy(origin = labeled.point, locationLabel = labeled.label) }
+            _state.update {
+                it.copy(
+                    origin = labeled.point,
+                    locationLabel = labeled.label,
+                    searchAnchor = labeled.label,
+                )
+            }
             labeled.point
         } else {
             snapshot.origin ?: location.current()?.also { fix ->
@@ -377,6 +393,16 @@ class FeedViewModel(
             )
         }
     }
+
+    private fun FeedUiState.liveAnchor(): String = searchAnchor(
+        usingGps = !demoEnabled && locationMode == LocationMode.DEVICE && permissionGranted,
+        placeLabel = if (locationMode == LocationMode.MANUAL) {
+            manualQuery.trim().ifBlank { locationLabel }
+        } else {
+            locationLabel
+        },
+        demoLabel = if (demoEnabled) locationLabel.ifBlank { "Civic, Canberra" } else null,
+    )
 
     private fun FeedUiState.toFilters(): SearchFilters = SearchFilters(
         radiusKm = (radiusKm * 10f).roundToInt() / 10.0,

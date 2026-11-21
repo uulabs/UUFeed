@@ -53,6 +53,8 @@ import androidx.core.content.ContextCompat
 import au.com.uulabs.uufeed.demo.DemoMode
 import au.com.uulabs.uufeed.domain.Budget
 import au.com.uulabs.uufeed.domain.formatKm
+import au.com.uulabs.uufeed.domain.searchAnchor
+import au.com.uulabs.uufeed.domain.searchingWithin
 import au.com.uulabs.uufeed.ui.LocationMode
 import au.com.uulabs.uufeed.ui.FeedUiState
 import au.com.uulabs.uufeed.ui.FeedViewModel
@@ -262,8 +264,31 @@ fun HomeScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         Text("What are you after?", style = MaterialTheme.typography.titleLarge)
+                        val anchor = if (state.phase == Phase.Searching) {
+                            state.searchAnchor
+                        } else {
+                            searchAnchor(
+                                usingGps = !state.demoEnabled &&
+                                    state.locationMode == LocationMode.DEVICE &&
+                                    state.permissionGranted,
+                                placeLabel = if (state.locationMode == LocationMode.MANUAL) {
+                                    state.manualQuery.trim().ifBlank { state.locationLabel }
+                                } else {
+                                    state.locationLabel
+                                },
+                                demoLabel = if (state.demoEnabled) {
+                                    state.locationLabel.ifBlank { "Civic, Canberra" }
+                                } else {
+                                    null
+                                },
+                            )
+                        }
                         Text(
-                            "Within ${formatKm(state.radiusKm.toDouble())}",
+                            if (state.phase == Phase.Searching) {
+                                searchingWithin(state.radiusKm.toDouble(), anchor)
+                            } else {
+                                "Within ${formatKm(state.radiusKm.toDouble())} of $anchor"
+                            },
                             style = MaterialTheme.typography.titleSmall,
                         )
                         Slider(

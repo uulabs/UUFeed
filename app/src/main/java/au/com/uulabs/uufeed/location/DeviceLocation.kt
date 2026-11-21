@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.os.Looper
 import androidx.core.content.ContextCompat
 import au.com.uulabs.uufeed.domain.GeoPoint
+import au.com.uulabs.uufeed.domain.formatGeocodedPlace
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -165,11 +166,13 @@ class DeviceLocation(
 
     private fun Location.toPoint() = GeoPoint(latitude, longitude)
 
-    private fun Address.friendlyLabel(): String {
-        val bits = listOfNotNull(subLocality, locality, adminArea).distinct()
-        if (bits.isNotEmpty()) return bits.joinToString(", ")
-        return featureName ?: getAddressLine(0) ?: "Selected place"
-    }
+    private fun Address.friendlyLabel(): String = formatGeocodedPlace(
+        subLocality = subLocality,
+        locality = locality,
+        adminArea = adminArea,
+        postalCode = postalCode,
+        addressLine = getAddressLine(0) ?: featureName,
+    )
 
     companion object {
         private const val STALE_MS = 2 * 60 * 1000L

@@ -53,7 +53,7 @@ data class SearchFilters(
         return if (trimmed.isEmpty()) "restaurants cafes" else trimmed
     }
 
-    fun summary(): String {
+    fun summary(anchor: String): String {
         val rating = when (minRating) {
             null -> "Any rating"
             else -> {
@@ -62,8 +62,51 @@ data class SearchFilters(
             }
         }
         val craving = keyword.trim().takeIf { it.isNotEmpty() }
-        val base = "Within ${formatKm(radiusKm)} · $rating · ${budget.description}"
+        val base = "Within ${formatKm(radiusKm)} of $anchor · $rating · ${budget.description}"
         return if (craving == null) base else "$base · $craving"
+    }
+}
+
+fun searchingWithin(radiusKm: Double, anchor: String): String =
+    "Searching within ${formatKm(radiusKm)} of $anchor"
+
+/**
+ * GPS searches say "your location". A typed suburb uses the geocoded place,
+ * such as "Wanniassa ACT 2903".
+ */
+fun searchAnchor(usingGps: Boolean, placeLabel: String, demoLabel: String? = null): String {
+    if (demoLabel != null) return demoLabel.ifBlank { "Civic, Canberra" }
+    if (usingGps) return "your location"
+    return placeLabel.trim().ifBlank { "the place you typed" }
+}
+
+fun formatGeocodedPlace(
+    subLocality: String?,
+    locality: String?,
+    adminArea: String?,
+    postalCode: String?,
+    addressLine: String? = null,
+): String {
+    val suburb = listOf(subLocality, locality).firstOrNull { !it.isNullOrBlank() }?.trim()
+    val region = abbreviateRegion(adminArea)?.takeIf { it != suburb }
+    val postcode = postalCode?.trim()?.takeIf { it.isNotEmpty() }
+    val parts = listOfNotNull(suburb, region, postcode)
+    if (parts.isNotEmpty()) return parts.joinToString(" ")
+    return addressLine?.trim()?.takeIf { it.isNotEmpty() } ?: "the place you typed"
+}
+
+private fun abbreviateRegion(adminArea: String?): String? {
+    val raw = adminArea?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    return when (raw.lowercase()) {
+        "australian capital territory" -> "ACT"
+        "new south wales" -> "NSW"
+        "victoria" -> "VIC"
+        "queensland" -> "QLD"
+        "south australia" -> "SA"
+        "western australia" -> "WA"
+        "tasmania" -> "TAS"
+        "northern territory" -> "NT"
+        else -> raw
     }
 }
 
