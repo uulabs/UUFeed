@@ -38,20 +38,90 @@ jobs:
       - name: Assemble debug and run unit tests
         run: ./gradlew assembleDebug testDebugUnitTest --stacktrace
 
-      - name: Copy the installable APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk UU-Feed-debug.apk
-
-      - name: Upload APK artifact
+      - name: Upload the debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: UU-Feed-debug
-          path: UU-Feed-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Require release signing secrets
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          UUFEED_KEYSTORE_BASE64: ${{ secrets.UUFEED_KEYSTORE_BASE64 }}
+          UUFEED_KEYSTORE_PASSWORD: ${{ secrets.UUFEED_KEYSTORE_PASSWORD }}
+          UUFEED_KEY_ALIAS: ${{ secrets.UUFEED_KEY_ALIAS }}
+          UUFEED_KEY_PASSWORD: ${{ secrets.UUFEED_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} must be vMAJOR.MINOR.PATCH, for example v1.1.0. See MAINTAINERS/RELEASING.md."
+            exit 1
+          fi
+          missing=()
+          [ -z "${UUFEED_KEYSTORE_BASE64}" ] && missing+=(UUFEED_KEYSTORE_BASE64)
+          [ -z "${UUFEED_KEYSTORE_PASSWORD}" ] && missing+=(UUFEED_KEYSTORE_PASSWORD)
+          [ -z "${UUFEED_KEY_ALIAS}" ] && missing+=(UUFEED_KEY_ALIAS)
+          [ -z "${UUFEED_KEY_PASSWORD}" ] && missing+=(UUFEED_KEY_PASSWORD)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Cannot publish a signed release. Missing GitHub Actions secrets: ${missing[*]}. Add the upload keystore as described in MAINTAINERS/RELEASING.md. This job does not attach a debug APK to the Release."
+            exit 1
+          fi
+
+      - name: Decode the upload keystore
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          UUFEED_KEYSTORE_BASE64: ${{ secrets.UUFEED_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/signing"
+          printf '%s' "${UUFEED_KEYSTORE_BASE64}" | base64 -d > "${RUNNER_TEMP}/signing/uufeed-upload.jks"
+          if [ ! -s "${RUNNER_TEMP}/signing/uufeed-upload.jks" ]; then
+            echo "::error::UUFEED_KEYSTORE_BASE64 did not decode to a keystore file."
+            exit 1
+          fi
+
+      - name: Assemble the signed release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          UUFEED_KEYSTORE_PATH: ${{ runner.temp }}/signing/uufeed-upload.jks
+          UUFEED_KEYSTORE_PASSWORD: ${{ secrets.UUFEED_KEYSTORE_PASSWORD }}
+          UUFEED_KEY_ALIAS: ${{ secrets.UUFEED_KEY_ALIAS }}
+          UUFEED_KEY_PASSWORD: ${{ secrets.UUFEED_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ./gradlew assembleRelease --stacktrace
+          apk="UU-Feed-${GITHUB_REF_NAME}.apk"
+          case "${apk}" in
+            *debug*)
+              echo "::error::Release APK name ${apk} must not contain debug."
+              exit 1
+              ;;
+          esac
+          cp app/build/outputs/apk/release/app-release.apk "${apk}"
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: UU-Feed-debug.apk
-          generate_release_notes: true
+          files: UU-Feed-${{ github.ref_name }}.apk
           fail_on_unmatched_files: true
+          generate_release_notes: true
+          body: |
+            UU Feed helps you pick somewhere to eat that is open right now. It asks Google Places for nearby places, then shows five of them with a mix of types.
+
+            ## Install the APK
+
+            1. Download `UU-Feed-${{ github.ref_name }}.apk` from this release.
+            2. On the phone, open the file and allow install from that app if Android asks.
+            3. If a previous UU Feed was signed with a different key, uninstall it first, then install again.
+
+            This is a signed sideload APK, not a Play Store upload. v1.0.0 was debug-signed, so installing this build over v1.0.0 requires an uninstall.
+
+            ## Places API key
+
+            A Google Places API key is set up in the app on first launch. Create a key for Places API (New), paste it in, test it, and save. The key stays on the phone.
+
+            ## License
+
+            UU Feed is free software under GPL-3.0-or-later. You can redistribute it and modify it under the GNU General Public License, version 3 or any later version. Fraunces and Outfit remain under the SIL Open Font License.

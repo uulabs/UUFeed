@@ -19,13 +19,13 @@ The screenshots are from a debug build with **Demo places** on. Those places, re
 ## Install an APK
 
 1. Open the [Releases](https://github.com/uulabs/UUFeed/releases) page.
-2. Download `UU-Feed-debug.apk` from the latest release.
+2. Download the signed APK for that version. The file is named `UU-Feed-vX.Y.Z.apk`, for example `UU-Feed-v1.1.0.apk`.
 3. On the phone, open the file and allow install from that app if Android asks.
 4. If a previous UU Feed was signed with a different key, uninstall it first, then install again.
 
-The file is a debug-signed APK so it can be sideloaded. It is not a Play Store upload. Each release is signed by the GitHub-hosted build, so the SHA-1 can change between tags. The setup screen shows the SHA-1 of the copy you installed.
+v1.0.0 was a debug-signed APK. Later releases are signed with the UU Feed upload key, so installing one of those over v1.0.0 requires an uninstall. The setup screen shows the SHA-1 of the copy you installed.
 
-Every push also uploads the same APK as a build artifact, before a release exists.
+Push and pull request builds upload a debug APK as a GitHub Actions artifact only. Those artifacts are not GitHub Releases.
 
 ## Add your Places API key
 
@@ -70,6 +70,8 @@ cp local.properties.example local.properties
 ```
 
 `local.properties` is gitignored. A key there is compiled into that build as a fallback. A key saved in the app replaces it. Do not commit a real key, a keystore, or a `build/` directory.
+
+`./gradlew assembleRelease` signs with the upload keystore. See [MAINTAINERS/RELEASING.md](MAINTAINERS/RELEASING.md).
 
 The debug APK from a local build is `app/build/outputs/apk/debug/app-debug.apk`.
 

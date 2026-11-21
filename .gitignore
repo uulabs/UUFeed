@@ -14,6 +14,7 @@
 *.hprof
 .kotlin/
 local.properties
+keystore.properties
 *.keystore
 *.jks
 *.p12
