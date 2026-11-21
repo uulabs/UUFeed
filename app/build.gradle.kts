@@ -23,11 +23,11 @@ val mapsApiKey = (
     .replace("\"", "\\\"")
 
 android {
-    namespace = "com.lunchy"
+    namespace = "com.uulabs.uufeed"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.lunchy"
+        applicationId = "com.uulabs.uufeed"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -96,6 +96,7 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
+    implementation(libs.security.crypto)
 
     testImplementation(libs.junit)
 }

@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        // AGP 9's built-in Kotlin defaults to an older compiler. Lunchy uses 2.4.
+        // AGP 9's built-in Kotlin defaults to an older compiler. UU Feed uses 2.4.
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.21")
     }
 }

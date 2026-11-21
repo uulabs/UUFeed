@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Lunchy"
+rootProject.name = "UUFeed"
 include(":app")

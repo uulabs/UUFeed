@@ -5,7 +5,7 @@
             android:name=".demo.DebugCaptureReceiver"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.lunchy.CAPTURE" />
+                <action android:name="com.uulabs.uufeed.CAPTURE" />
             </intent-filter>
         </receiver>
     </application>

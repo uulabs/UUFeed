@@ -15,4 +15,5 @@
 .kotlin/
 local.properties
 *.keystore
-!debug.keystore
+*.jks
+*.p12

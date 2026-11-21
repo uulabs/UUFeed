@@ -2,6 +2,6 @@
 sdk.dir=/Users/you/Library/Android/sdk
 
 # Google Places API (New) key. Never commit a real key.
-# Restrict it to Android package com.lunchy plus your signing SHA-1,
+# Restrict it to Android package com.uulabs.uufeed plus your signing SHA-1,
 # and to the Places API (New) only. See the README.
 MAPS_API_KEY=
