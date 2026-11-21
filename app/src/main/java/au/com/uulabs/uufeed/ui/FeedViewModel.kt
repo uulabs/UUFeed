@@ -321,7 +321,8 @@ class FeedViewModel(
             } catch (error: Exception) {
                 _state.update {
                     it.copy(
-                        phase = if (it.results.isEmpty()) Phase.Idle else Phase.Results,
+                        phase = Phase.Results,
+                        notice = null,
                         error = error.message ?: "Something went wrong.",
                     )
                 }

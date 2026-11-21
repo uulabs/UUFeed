@@ -1,5 +1,6 @@
 package au.com.uulabs.uufeed.data.legacy
 
+import au.com.uulabs.uufeed.data.FlexibleDoubleSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -16,6 +17,7 @@ data class LegacyEnvelope(
 data class LegacyPlace(
     @SerialName("place_id") val placeId: String? = null,
     val name: String? = null,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val rating: Double? = null,
     @SerialName("user_ratings_total") val userRatingsTotal: Int? = null,
     @SerialName("price_level") val priceLevel: Int? = null,
@@ -41,7 +43,9 @@ data class LegacyGeometry(
 
 @Serializable
 data class LegacyLatLng(
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val lat: Double = 0.0,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val lng: Double = 0.0,
 )
 
@@ -61,6 +65,7 @@ data class LegacyPhoto(
 data class LegacyReview(
     @SerialName("author_name") val authorName: String? = null,
     @SerialName("profile_photo_url") val profilePhotoUrl: String? = null,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val rating: Double? = null,
     @SerialName("relative_time_description") val relativeTimeDescription: String? = null,
     val text: String? = null,

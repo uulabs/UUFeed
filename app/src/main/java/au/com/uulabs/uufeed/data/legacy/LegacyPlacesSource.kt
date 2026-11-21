@@ -16,9 +16,9 @@ import okhttp3.Request
 
 /**
  * Legacy Places API (maps.googleapis.com): Nearby Search, Place Details, and
- * Place Photo references. Nearby Search accepts one type, so a keyword covers
- * restaurant, cafe, and takeaway together. A craving replaces that keyword.
- * Details asks for reviews_sort=newest, which is the five most recent reviews.
+ * Place Photo references. Nearby Search accepts one type. The default keyword
+ * is `restaurant|cafe|meal_takeaway`, which returns a mix; a craving replaces
+ * it. A space-separated phrase does not. Details asks for reviews_sort=newest.
  */
 class LegacyPlacesSource(
     private val http: OkHttpClient,
@@ -27,6 +27,7 @@ class LegacyPlacesSource(
     private val certSha1: String = "",
     private val json: Json,
     private val beforePageToken: suspend () -> Unit = { delay(PAGE_TOKEN_WAIT_MS) },
+    private val debugLog: (String) -> Unit = {},
     private val baseUrl: HttpUrl = DEFAULT_BASE,
 ) : PlacesClient {
     override suspend fun search(query: PlacesQuery): SearchPage {
@@ -58,20 +59,31 @@ class LegacyPlacesSource(
             if (packageName.isNotBlank()) header("X-Android-Package", packageName)
             if (certSha1.isNotBlank()) header("X-Android-Cert", certSha1)
         }.build()
+        debugLog("GET ${redactKey(url)}")
         val response = http.newCall(request).execute()
+        val code = response.code
         val raw = response.use { it.body?.string().orEmpty() }
-        val envelope = runCatching { json.decodeFromString(LegacyEnvelope.serializer(), raw) }.getOrNull()
-        val status = envelope?.status
-        if (response.isSuccessful && (status == null || status == "OK" || status == "ZERO_RESULTS")) {
-            return envelope ?: LegacyEnvelope()
+        val envelope = try {
+            json.decodeFromString(LegacyEnvelope.serializer(), raw)
+        } catch (error: Exception) {
+            debugLog("Could not read Places response HTTP $code: ${error.message}")
+            throw PlacesException("Couldn't read Google's Places response (HTTP $code).", code)
         }
-        throw PlacesException(legacyError(status, envelope?.errorMessage, response.code), response.code)
+        val status = envelope.status
+        debugLog("Places status=${status ?: "none"} HTTP $code")
+        if (code in 200..299 && (status == null || status == "OK" || status == "ZERO_RESULTS")) {
+            return envelope
+        }
+        throw PlacesException(legacyError(status, envelope.errorMessage, code), code)
     }
 
     companion object {
         const val PAGE_TOKEN_WAIT_MS = 2_000L
         val DEFAULT_BASE: HttpUrl = "https://maps.googleapis.com/".toHttpUrl()
-        const val DEFAULT_KEYWORD = "restaurant cafe meal_takeaway"
+        const val DEFAULT_KEYWORD = "restaurant|cafe|meal_takeaway"
+
+        fun redactKey(url: HttpUrl): String =
+            url.newBuilder().removeAllQueryParameters("key").build().toString()
         const val DETAIL_FIELDS = "name,rating,user_ratings_total,price_level,formatted_address," +
             "formatted_phone_number,international_phone_number,website,opening_hours,photos,reviews," +
             "url,geometry,types"
@@ -129,14 +141,20 @@ class LegacyPlacesSource(
         }
 
         fun legacyError(status: String?, message: String?, httpCode: Int): String {
-            val detail = message?.takeIf { it.isNotBlank() } ?: status ?: "Places request failed ($httpCode)."
+            val statusLabel = status?.takeIf { it.isNotBlank() } ?: "HTTP $httpCode"
+            val detail = message?.takeIf { it.isNotBlank() }
             val hint = when (status) {
                 "OVER_QUERY_LIMIT" -> " The quota for this key is used up."
                 "REQUEST_DENIED" -> " Enable Places API (the legacy one) for this key, or turn on Places API (New)."
                 "INVALID_REQUEST" -> " The legacy Places request was rejected."
                 else -> ""
             }
-            return detail + hint
+            val headline = if (detail != null && !detail.contains(statusLabel)) {
+                "$statusLabel: $detail"
+            } else {
+                detail ?: statusLabel
+            }
+            return headline + hint
         }
     }
 }

@@ -2,6 +2,7 @@ package au.com.uulabs.uufeed
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -35,6 +36,22 @@ class UuFeedApp : Application(), SingletonImageLoader.Factory {
     override fun newImageLoader(context: PlatformContext): ImageLoader = graph.imageLoader
 }
 
+private fun OkHttpClient.Builder.debugPlacesLog(): OkHttpClient.Builder {
+    if (!BuildConfig.DEBUG) return this
+    addInterceptor { chain ->
+        val request = chain.request()
+        val redacted = request.url.newBuilder().removeAllQueryParameters("key").build()
+        val response = chain.proceed(request)
+        Log.d("UuFeedPlaces", "${request.method} $redacted -> ${response.code}")
+        response
+    }
+    return this
+}
+
+private fun logPlaces(message: String) {
+    if (BuildConfig.DEBUG) Log.d("UuFeedPlaces", message)
+}
+
 class AppGraph(context: Context) {
     private val appContext = context.applicationContext
     private val json = Json {
@@ -55,12 +72,14 @@ class AppGraph(context: Context) {
                 certSha1 = keyStore.signingSha1,
             ),
         )
+        .debugPlacesLog()
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
         .build()
 
     private val plainHttp = OkHttpClient.Builder()
+        .debugPlacesLog()
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
@@ -99,6 +118,7 @@ class AppGraph(context: Context) {
                     packageName = appContext.packageName,
                     certSha1 = keyStore.signingSha1,
                     json = json,
+                    debugLog = ::logPlaces,
                 ),
                 keys = keyStore,
                 tester = keyTester,

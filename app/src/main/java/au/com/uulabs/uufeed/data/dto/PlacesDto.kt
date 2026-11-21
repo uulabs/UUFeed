@@ -1,5 +1,6 @@
 package au.com.uulabs.uufeed.data.dto
 
+import au.com.uulabs.uufeed.data.FlexibleDoubleSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -27,12 +28,15 @@ data class LocationBiasDto(
 @Serializable
 data class CircleDto(
     val center: LatLngDto,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val radius: Double,
 )
 
 @Serializable
 data class LatLngDto(
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val latitude: Double,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val longitude: Double,
 )
 
@@ -49,6 +53,7 @@ data class PlaceDto(
     val displayName: LocalizedTextDto? = null,
     val formattedAddress: String? = null,
     val location: LatLngDto? = null,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val rating: Double? = null,
     val userRatingCount: Int? = null,
     val priceLevel: String? = null,
@@ -108,6 +113,7 @@ data class MoneyDto(
 @Serializable
 data class ReviewDto(
     val relativePublishTimeDescription: String? = null,
+    @Serializable(with = FlexibleDoubleSerializer::class)
     val rating: Double? = null,
     val text: LocalizedTextDto? = null,
     val originalText: LocalizedTextDto? = null,
