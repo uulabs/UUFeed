@@ -99,4 +99,8 @@ Debug builds include a **Demo places** switch with invented places, reviews, and
 - The exclusion list lasts for the process only. It is not saved.
 - Photo author names are shown when Google sends them. There is also a "Places and reviews from Google" line. If you ship this, follow the [Google Maps Platform attribution rules](https://developers.google.com/maps/documentation/places/web-service/policies).
 
-Fraunces and Outfit are included under the SIL Open Font License. See `third_party/fonts/`.
+## License
+
+UU Feed is free software. You can redistribute it and modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. The SPDX identifier is `GPL-3.0-or-later`. The full license is in [LICENSE](LICENSE).
+
+Fraunces and Outfit, bundled in `third_party/fonts/`, remain under the SIL Open Font License. See `third_party/fonts/OFL-Fraunces.txt` and `third_party/fonts/OFL-Outfit.txt`. That license covers the font files only.
