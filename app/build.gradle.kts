@@ -23,11 +23,11 @@ val mapsApiKey = (
     .replace("\"", "\\\"")
 
 android {
-    namespace = "com.uulabs.uufeed"
+    namespace = "au.com.uulabs.uufeed"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.uulabs.uufeed"
+        applicationId = "au.com.uulabs.uufeed"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

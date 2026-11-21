@@ -34,7 +34,7 @@ UU Feed cannot search until it has a key. The first launch opens setup when none
 1. Create a [Google Cloud](https://console.cloud.google.com/) project and attach a billing account. Places will not answer without billing. Light personal use stays inside the free monthly allowance.
 2. Enable **Places API (New)**. The older product named Places API is a different API.
 3. Create an API key under APIs & Services → Credentials.
-4. Optional: restrict the key to Android apps. Package name `com.uulabs.uufeed`. SHA-1 is on the setup screen (there is a copy button). Also restrict the API to Places API (New) only.
+4. Optional: restrict the key to Android apps. Package name `au.com.uulabs.uufeed`. SHA-1 is on the setup screen (there is a copy button). Also restrict the API to Places API (New) only.
 5. In the app, tap **Open Google Cloud**. That opens the Places API (New) library page.
 6. Paste the key and tap **Test key**. A successful test is one small call that asks only for place IDs.
 7. Tap **Save and continue**. The key is stored with EncryptedSharedPreferences and is not committed anywhere.
