@@ -35,6 +35,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.lunchy.demo.DemoMode
 import com.lunchy.domain.Budget
 import com.lunchy.domain.formatKm
 import com.lunchy.ui.LocationMode
@@ -108,8 +110,8 @@ fun HomeScreen(
                 modifier = Modifier
                     .widthIn(max = 680.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -123,6 +125,33 @@ fun HomeScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
+                    }
+                }
+
+                if (DemoMode.available) {
+                    Surface(
+                        shape = MaterialTheme.shapes.large,
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Demo places", style = MaterialTheme.typography.titleSmall)
+                                Text(
+                                    "Invented Civic lunch spots for trying the layout. Not from Google. Release builds leave this off.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                            }
+                            Switch(
+                                checked = state.demoEnabled,
+                                onCheckedChange = viewModel::setDemoEnabled,
+                            )
+                        }
                     }
                 }
 
@@ -148,7 +177,7 @@ fun HomeScreen(
                                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                             ) { Text("A suburb") }
                         }
-                        if (state.locationMode == LocationMode.DEVICE) {
+                        if (state.demoEnabled || state.locationMode == LocationMode.DEVICE) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -156,6 +185,7 @@ fun HomeScreen(
                                 Icon(Icons.Filled.MyLocation, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                                 Text(
                                     text = when {
+                                        state.demoEnabled -> "Demo search from Civic, Canberra. The device location is not used."
                                         state.locating -> "Finding you…"
                                         state.permissionGranted && state.locationLabel.isNotBlank() -> state.locationLabel
                                         state.permissionGranted -> "Using your location"
@@ -164,7 +194,7 @@ fun HomeScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                             }
-                            if (!state.permissionGranted && state.permissionAsked) {
+                            if (!state.demoEnabled && !state.permissionGranted && state.permissionAsked) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     OutlinedButton(onClick = {
                                         permissionLauncher.launch(
@@ -184,7 +214,7 @@ fun HomeScreen(
                                 }
                             }
                         }
-                        if (state.locationMode == LocationMode.MANUAL || !state.permissionGranted) {
+                        if (!state.demoEnabled && (state.locationMode == LocationMode.MANUAL || !state.permissionGranted)) {
                             OutlinedTextField(
                                 value = state.manualQuery,
                                 onValueChange = viewModel::setManualQuery,
@@ -220,9 +250,11 @@ fun HomeScreen(
                         )
                         Slider(
                             value = state.radiusKm,
-                            onValueChange = viewModel::setRadius,
+                            onValueChange = { raw ->
+                                val snapped = (kotlin.math.round(raw * 2f) / 2f).coerceIn(0.5f, 25f)
+                                viewModel.setRadius(snapped)
+                            },
                             valueRange = 0.5f..25f,
-                            steps = 48,
                         )
                         Text("Minimum rating", style = MaterialTheme.typography.titleSmall)
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

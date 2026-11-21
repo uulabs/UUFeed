@@ -57,6 +57,7 @@ fun LunchApp(viewModel: LunchViewModel) {
                 listed = state.results.firstOrNull { it.id == id },
                 detailsState = state.details,
                 origin = state.origin,
+                demo = state.demoEnabled,
                 onBack = { navController.popBackStack() },
                 viewModel = viewModel,
             )

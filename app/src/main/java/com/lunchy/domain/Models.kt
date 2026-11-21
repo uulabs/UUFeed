@@ -121,8 +121,12 @@ data class PlacePhoto(
     val name: String,
     val attribution: String?,
 ) {
-    fun mediaUrl(maxWidthPx: Int): String =
-        "https://places.googleapis.com/v1/${name.trimStart('/')}/media?maxWidthPx=$maxWidthPx"
+    fun mediaUrl(maxWidthPx: Int): String {
+        if (name.startsWith("android.resource://") || name.startsWith("http://") || name.startsWith("https://")) {
+            return name
+        }
+        return "https://places.googleapis.com/v1/${name.trimStart('/')}/media?maxWidthPx=$maxWidthPx"
+    }
 }
 
 data class PlaceCandidate(

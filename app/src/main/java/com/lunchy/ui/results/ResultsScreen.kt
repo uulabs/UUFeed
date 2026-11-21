@@ -87,7 +87,11 @@ fun ResultsScreen(
                             Text(state.summary, style = MaterialTheme.typography.titleMedium)
                         }
                         Text(
-                            "Picked for a mix of places, not just the five most famous. Places you've already seen stay hidden until you close Lunchy.",
+                            if (state.demoEnabled) {
+                                "Demo data. These places are invented, not from Google. Picked for a mix, and places you've already seen stay hidden until you close Lunchy."
+                            } else {
+                                "Picked for a mix of places, not just the five most famous. Places you've already seen stay hidden until you close Lunchy."
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -141,7 +145,7 @@ fun ResultsScreen(
                 }
                 item {
                     Text(
-                        "Places and reviews from Google.",
+                        if (state.demoEnabled) "Demo illustrations, not Google photos." else "Places and reviews from Google.",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 12.dp),

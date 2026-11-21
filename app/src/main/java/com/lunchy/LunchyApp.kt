@@ -7,11 +7,13 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.CachePolicy
+import com.lunchy.data.ActivePlacesClient
 import com.lunchy.data.JsonConverterFactory
 import com.lunchy.data.PlacesApi
 import com.lunchy.data.PlacesHeaders
 import com.lunchy.data.PlacesRepository
 import com.lunchy.data.RetrofitPlacesClient
+import com.lunchy.demo.demoPlacesClient
 import com.lunchy.domain.SuggestionSession
 import com.lunchy.location.DeviceLocation
 import com.lunchy.ui.LunchViewModel
@@ -67,7 +69,10 @@ class AppGraph(context: Context) {
         .create(PlacesApi::class.java)
 
     val repository = PlacesRepository(
-        client = RetrofitPlacesClient(api, apiKey, json),
+        client = ActivePlacesClient(
+            live = RetrofitPlacesClient(api, apiKey, json),
+            demo = demoPlacesClient(),
+        ),
         session = SuggestionSession(),
     )
 

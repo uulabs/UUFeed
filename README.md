@@ -12,6 +12,10 @@ Lunchy picks five places that are open right now, near you, and mixes them up in
 - **Five more** returns five places that have not been shown yet in this app process. The exclusion set is only in memory. Force-stopping Lunchy, or the system killing the process, starts a fresh list. Changing filters does not bring a place back once it has been shown.
 - If the current pool runs out, Lunchy asks for the next page, then looks further out (up to 25 km) and says so. When nothing new is left, it says that too.
 
+## Demo mode
+
+Debug builds have a **Demo places** switch on the search screen. It serves invented Civic lunch spots, sample reviews, and bundled illustrations so the screens can be checked without a Places key. The switch is not in the release source set, and release builds cannot turn it on. Leave it off when you have a real key. Debug builds can also save a window drawing with `adb shell am broadcast -n com.lunchy/.demo.DebugCaptureReceiver -a com.lunchy.CAPTURE --es name shot`, which is useful when an emulator's GPU framebuffer is blank.
+
 ## Requirements
 
 - JDK 17 or newer (the project compiles to JVM 17)

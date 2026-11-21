@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import com.lunchy.demo.installDebugCapture
 import com.lunchy.ui.LunchApp
 import com.lunchy.ui.LunchViewModel
 import com.lunchy.ui.theme.LunchyTheme
@@ -16,6 +17,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installDebugCapture(this)
         enableEdgeToEdge()
         setContent {
             LunchyTheme {

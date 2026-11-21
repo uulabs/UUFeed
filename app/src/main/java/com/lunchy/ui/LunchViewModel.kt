@@ -3,6 +3,7 @@ package com.lunchy.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lunchy.data.PlacesRepository
+import com.lunchy.demo.DemoMode
 import com.lunchy.domain.Budget
 import com.lunchy.domain.GeoPoint
 import com.lunchy.domain.PlaceCandidate
@@ -51,6 +52,7 @@ data class LunchUiState(
     val canSearchAgain: Boolean = false,
     val summary: String = "",
     val details: DetailsState = DetailsState.Idle,
+    val demoEnabled: Boolean = false,
 )
 
 sealed interface LunchEvent {
@@ -114,6 +116,19 @@ class LunchViewModel(
 
     fun setKeyword(value: String) {
         _state.update { it.copy(keyword = value) }
+    }
+
+    fun setDemoEnabled(enabled: Boolean) {
+        if (!DemoMode.available) return
+        DemoMode.enabled = enabled
+        _state.update {
+            it.copy(
+                demoEnabled = enabled,
+                origin = if (enabled) DemoMode.origin else it.origin,
+                locationLabel = if (enabled) "Civic, Canberra" else it.locationLabel,
+                error = null,
+            )
+        }
     }
 
     fun refreshDeviceLocation() {
@@ -220,6 +235,10 @@ class LunchViewModel(
             if (filters != null && origin != null) return filters to origin
         }
         val filters = snapshot.toFilters()
+        if (DemoMode.available && DemoMode.enabled) {
+            _state.update { it.copy(origin = DemoMode.origin, locationLabel = "Civic, Canberra") }
+            return filters to DemoMode.origin
+        }
         val origin = if (snapshot.locationMode == LocationMode.MANUAL || !snapshot.permissionGranted) {
             val query = snapshot.manualQuery.trim()
             if (query.isEmpty()) {

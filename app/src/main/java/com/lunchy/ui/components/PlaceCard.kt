@@ -20,11 +20,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.lunchy.domain.Geo
 import com.lunchy.domain.GeoPoint
 import com.lunchy.domain.PlaceCandidate
@@ -130,13 +128,11 @@ fun PlaceThumbnail(
                 color = MaterialTheme.colorScheme.primary,
             )
         } else {
-            AsyncImage(
+            LunchImage(
                 model = photo.mediaUrl(maxWidthPx),
                 contentDescription = listOfNotNull(place.name, photo.attribution).joinToString(". "),
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
-                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
             )
         }
     }

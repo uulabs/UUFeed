@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,13 +46,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.lunchy.domain.Geo
 import com.lunchy.domain.GeoPoint
 import com.lunchy.domain.PlaceCandidate
@@ -63,6 +62,7 @@ import com.lunchy.domain.formatRating
 import com.lunchy.domain.formatReviewCount
 import com.lunchy.ui.DetailsState
 import com.lunchy.ui.LunchViewModel
+import com.lunchy.ui.components.LunchImage
 import com.lunchy.ui.components.openLabel
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -75,6 +75,7 @@ fun DetailsScreen(
     listed: PlaceCandidate?,
     detailsState: DetailsState,
     origin: GeoPoint?,
+    demo: Boolean,
     onBack: () -> Unit,
     viewModel: LunchViewModel,
 ) {
@@ -177,9 +178,13 @@ fun DetailsScreen(
                                 Text(it, style = MaterialTheme.typography.bodyLarge)
                             }
                             HoursBlock(loaded?.weekdayHours.orEmpty())
-                            ReviewsBlock(loaded?.reviews, loading = loading != null && loaded == null)
+                            ReviewsBlock(
+                                reviews = loaded?.reviews,
+                                loading = loading != null && loaded == null,
+                                demo = demo,
+                            )
                             Text(
-                                "Places and reviews from Google.",
+                                if (demo) "Demo illustrations and sample reviews. Not from Google." else "Places and reviews from Google.",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -213,7 +218,7 @@ private fun PhotoPager(photos: List<PlacePhoto>, placeName: String) {
             pageSpacing = 12.dp,
         ) { page ->
             val photo = photos[page]
-            AsyncImage(
+            LunchImage(
                 model = photo.mediaUrl(1200),
                 contentDescription = listOfNotNull(placeName, photo.attribution).joinToString(". "),
                 modifier = Modifier
@@ -221,8 +226,6 @@ private fun PhotoPager(photos: List<PlacePhoto>, placeName: String) {
                     .aspectRatio(1.5f)
                     .clip(MaterialTheme.shapes.large),
                 contentScale = ContentScale.Crop,
-                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
             )
         }
         photos.getOrNull(pager.currentPage)?.attribution?.let { credit ->
@@ -245,7 +248,7 @@ private fun ActionRow(
     website: String?,
 ) {
     val context = LocalContext.current
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Button(onClick = {
             val uri = Uri.parse("https://www.google.com/maps/dir/").buildUpon()
                 .appendQueryParameter("api", "1")
@@ -300,11 +303,15 @@ private fun HoursBlock(hours: List<String>) {
 }
 
 @Composable
-private fun ReviewsBlock(reviews: List<Review>?, loading: Boolean) {
+private fun ReviewsBlock(reviews: List<Review>?, loading: Boolean, demo: Boolean) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text("Recent reviews", style = MaterialTheme.typography.titleMedium)
         Text(
-            "Newest of the reviews Google returned. The API sends at most five, chosen by relevance, and Lunchy sorts those by time.",
+            if (demo) {
+                "Sample reviews, newest first. Not from Google."
+            } else {
+                "Newest of the reviews Google returned. The API sends at most five, chosen by relevance, and Lunchy sorts those by time."
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -327,13 +334,11 @@ private fun ReviewCard(review: Review) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (review.authorPhotoUrl != null) {
-                    AsyncImage(
+                    LunchImage(
                         model = review.authorPhotoUrl,
                         contentDescription = review.authorName,
                         modifier = Modifier.size(40.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop,
-                        placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                        error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
                     )
                 } else {
                     Box(
