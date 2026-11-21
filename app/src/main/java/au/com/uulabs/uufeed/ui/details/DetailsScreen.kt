@@ -310,7 +310,7 @@ private fun ReviewsBlock(reviews: List<Review>?, loading: Boolean, demo: Boolean
             if (demo) {
                 "Sample reviews, newest first. Not from Google."
             } else {
-                "Newest of the reviews Google returned. The API sends at most five, chosen by relevance, and UU Feed sorts those by time."
+                "Up to five reviews. The older Places API is asked for the newest. Places API (New) sends its most relevant five, and UU Feed sorts those by time."
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

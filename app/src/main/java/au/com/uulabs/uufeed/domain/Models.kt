@@ -160,6 +160,24 @@ data class Review(
     val mapsUri: String?,
 )
 
+fun PlaceDetails.filledFrom(summary: PlaceCandidate): PlaceDetails {
+    val hasLocation = latitude != 0.0 || longitude != 0.0
+    return copy(
+        id = id.ifBlank { summary.id },
+        name = name.ifBlank { summary.name },
+        address = address ?: summary.address,
+        rating = rating ?: summary.rating,
+        reviewCount = if (reviewCount == 0) summary.reviewCount else reviewCount,
+        priceLabel = if (priceLevel == null) summary.priceLabel else priceLabel,
+        priceLevel = priceLevel ?: summary.priceLevel,
+        openNow = openNow ?: summary.openNow,
+        photos = photos.ifEmpty { summary.photos },
+        typeLabel = typeLabel ?: summary.typeLabel,
+        latitude = if (hasLocation) latitude else summary.latitude,
+        longitude = if (hasLocation) longitude else summary.longitude,
+    )
+}
+
 data class PlaceDetails(
     val id: String,
     val name: String,

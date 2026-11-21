@@ -36,31 +36,33 @@ object PlaceMapper {
         )
     }
 
-    fun toDetails(dto: PlaceDto): PlaceDetails? {
-        val candidate = toCandidate(dto) ?: return null
+    fun toDetails(dto: PlaceDto, fallbackId: String = ""): PlaceDetails {
+        val candidate = toCandidate(dto)
         val hours = dto.regularOpeningHours?.weekdayDescriptions
             ?: dto.currentOpeningHours?.weekdayDescriptions
             ?: emptyList()
+        val level = PriceLevel.fromApi(dto.priceLevel)
+        val quote = quote(dto.priceRange)
         return PlaceDetails(
-            id = candidate.id,
-            name = candidate.name,
-            address = candidate.address,
+            id = candidate?.id ?: placeId(dto) ?: fallbackId,
+            name = candidate?.name ?: dto.displayName?.text?.takeIf { it.isNotBlank() }.orEmpty(),
+            address = candidate?.address ?: dto.formattedAddress,
             phone = dto.nationalPhoneNumber ?: dto.internationalPhoneNumber,
             internationalPhone = dto.internationalPhoneNumber ?: dto.nationalPhoneNumber,
             website = dto.websiteUri,
             mapsUri = dto.googleMapsUri,
-            rating = candidate.rating,
-            reviewCount = candidate.reviewCount,
-            priceLabel = candidate.priceLabel,
-            priceLevel = candidate.priceLevel,
-            openNow = candidate.openNow,
+            rating = candidate?.rating ?: dto.rating,
+            reviewCount = candidate?.reviewCount ?: dto.userRatingCount ?: 0,
+            priceLabel = candidate?.priceLabel ?: formatPrice(level, quote),
+            priceLevel = candidate?.priceLevel ?: level,
+            openNow = candidate?.openNow ?: openNow(dto),
             weekdayHours = hours,
-            photos = candidate.photos,
+            photos = candidate?.photos ?: photos(dto),
             reviews = newestReviews(reviews(dto)),
             editorial = dto.editorialSummary?.text?.takeIf { it.isNotBlank() },
-            typeLabel = candidate.typeLabel,
-            latitude = candidate.latitude,
-            longitude = candidate.longitude,
+            typeLabel = candidate?.typeLabel ?: typeLabel(dto),
+            latitude = candidate?.latitude ?: dto.location?.latitude ?: 0.0,
+            longitude = candidate?.longitude ?: dto.location?.longitude ?: 0.0,
         )
     }
 

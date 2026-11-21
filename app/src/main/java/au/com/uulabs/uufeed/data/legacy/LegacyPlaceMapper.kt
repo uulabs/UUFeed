@@ -33,28 +33,31 @@ object LegacyPlaceMapper {
         )
     }
 
-    fun toDetails(place: LegacyPlace): PlaceDetails? {
-        val candidate = toCandidate(place) ?: return null
+    fun toDetails(place: LegacyPlace, fallbackId: String = ""): PlaceDetails {
+        val candidate = toCandidate(place)
+        val level = priceLevel(place.priceLevel)
         return PlaceDetails(
-            id = candidate.id,
-            name = candidate.name,
-            address = candidate.address,
+            id = candidate?.id ?: place.placeId?.takeIf { it.isNotBlank() } ?: fallbackId,
+            name = candidate?.name ?: place.name?.takeIf { it.isNotBlank() }.orEmpty(),
+            address = candidate?.address
+                ?: place.formattedAddress?.takeIf { it.isNotBlank() }
+                ?: place.vicinity,
             phone = place.formattedPhoneNumber ?: place.internationalPhoneNumber,
             internationalPhone = place.internationalPhoneNumber ?: place.formattedPhoneNumber,
             website = place.website,
             mapsUri = place.url,
-            rating = candidate.rating,
-            reviewCount = candidate.reviewCount,
-            priceLabel = candidate.priceLabel,
-            priceLevel = candidate.priceLevel,
-            openNow = candidate.openNow,
+            rating = candidate?.rating ?: place.rating,
+            reviewCount = candidate?.reviewCount ?: place.userRatingsTotal ?: 0,
+            priceLabel = candidate?.priceLabel ?: formatPrice(level, null),
+            priceLevel = candidate?.priceLevel ?: level,
+            openNow = candidate?.openNow ?: openNow(place),
             weekdayHours = place.openingHours?.weekdayText.orEmpty(),
-            photos = candidate.photos,
+            photos = candidate?.photos ?: photos(place),
             reviews = newestReviews(reviews(place)),
             editorial = null,
-            typeLabel = candidate.typeLabel,
-            latitude = candidate.latitude,
-            longitude = candidate.longitude,
+            typeLabel = candidate?.typeLabel ?: typeLabel(place.types),
+            latitude = candidate?.latitude ?: place.geometry?.location?.lat ?: 0.0,
+            longitude = candidate?.longitude ?: place.geometry?.location?.lng ?: 0.0,
         )
     }
 

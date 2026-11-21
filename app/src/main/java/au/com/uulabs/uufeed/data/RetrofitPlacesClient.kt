@@ -31,8 +31,7 @@ class RetrofitPlacesClient(
         if (apiKey().isBlank()) throw MissingApiKeyException()
         val response = api.placeDetails(placeId, PlacesApi.DETAILS_MASK)
         val body = response.bodyOrThrow(json)
-        return PlaceMapper.toDetails(body)
-            ?: throw PlacesException("Google returned a place without a name or location.")
+        return PlaceMapper.toDetails(body, placeId)
     }
 }
 

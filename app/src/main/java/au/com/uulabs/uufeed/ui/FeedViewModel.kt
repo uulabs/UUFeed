@@ -12,6 +12,7 @@ import au.com.uulabs.uufeed.domain.Budget
 import au.com.uulabs.uufeed.domain.GeoPoint
 import au.com.uulabs.uufeed.domain.PlaceCandidate
 import au.com.uulabs.uufeed.domain.PlaceDetails
+import au.com.uulabs.uufeed.domain.filledFrom
 import au.com.uulabs.uufeed.domain.SearchFilters
 import au.com.uulabs.uufeed.domain.SearchNotices
 import au.com.uulabs.uufeed.location.DeviceLocation
@@ -274,7 +275,7 @@ class FeedViewModel(
         _state.update { it.copy(details = DetailsState.Loading(summary)) }
         viewModelScope.launch {
             try {
-                val details = repository.details(id)
+                val details = repository.details(id).filledFrom(summary)
                 if (token != detailsToken) return@launch
                 _state.update { it.copy(details = DetailsState.Ready(summary, details)) }
             } catch (cancelled: CancellationException) {

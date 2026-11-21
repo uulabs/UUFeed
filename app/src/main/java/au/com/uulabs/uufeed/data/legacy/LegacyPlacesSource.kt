@@ -44,8 +44,7 @@ class LegacyPlacesSource(
         val key = requireKey()
         val envelope = get(detailsUrl(baseUrl, placeId, key))
         val place = envelope.result ?: throw PlacesException("Google returned a place without details.")
-        return LegacyPlaceMapper.toDetails(place)
-            ?: throw PlacesException("Google returned a place without a name or location.")
+        return LegacyPlaceMapper.toDetails(place, fallbackId = placeId)
     }
 
     private fun requireKey(): String {
@@ -84,9 +83,9 @@ class LegacyPlacesSource(
 
         fun redactKey(url: HttpUrl): String =
             url.newBuilder().removeAllQueryParameters("key").build().toString()
-        const val DETAIL_FIELDS = "name,rating,user_ratings_total,price_level,formatted_address," +
-            "formatted_phone_number,international_phone_number,website,opening_hours,photos,reviews," +
-            "url,geometry,types"
+        const val DETAIL_FIELDS = "place_id,name,geometry/location,formatted_address,vicinity," +
+            "rating,user_ratings_total,price_level,opening_hours,photo,reviews,url," +
+            "formatted_phone_number,international_phone_number,website,type"
 
         fun nearbyUrl(base: HttpUrl, query: PlacesQuery, key: String): HttpUrl {
             val builder = base.newBuilder()

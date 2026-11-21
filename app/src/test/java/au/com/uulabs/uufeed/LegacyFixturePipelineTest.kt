@@ -3,7 +3,10 @@ package au.com.uulabs.uufeed
 import au.com.uulabs.uufeed.data.PlacesException
 import au.com.uulabs.uufeed.data.PlacesRepository
 import au.com.uulabs.uufeed.data.dto.PlaceDto
+import au.com.uulabs.uufeed.data.dto.PlaceMapper
 import au.com.uulabs.uufeed.data.legacy.LegacyPlacesSource
+import au.com.uulabs.uufeed.domain.PlaceCandidate
+import au.com.uulabs.uufeed.domain.filledFrom
 import au.com.uulabs.uufeed.domain.Budget
 import au.com.uulabs.uufeed.domain.GeoPoint
 import au.com.uulabs.uufeed.domain.SearchFilters
@@ -109,6 +112,55 @@ class LegacyFixturePipelineTest {
     }
 
     @Test
+    fun sparseDetailsKeepReviewsAndUseTheListSummary() = runBlocking {
+        val server = MockWebServer()
+        server.enqueue(MockResponse().setBody(SPARSE_DETAILS))
+        server.start()
+        try {
+            val source = LegacyPlacesSource(
+                http = OkHttpClient(),
+                apiKey = { "secret-key" },
+                json = json,
+                beforePageToken = {},
+                baseUrl = server.url("/"),
+            )
+            val details = source.details("hancook-id").filledFrom(hancookSummary())
+            assertEquals("HanCook Restaurant", details.name)
+            assertEquals("hancook-id", details.id)
+            assertEquals(-35.413, details.latitude, 0.0001)
+            assertEquals(149.094, details.longitude, 0.0001)
+            assertEquals("02 6296 1234", details.phone)
+            assertEquals("https://hancook.example", details.website)
+            val review = details.reviews.single()
+            assertEquals("Sam", review.authorName)
+            assertEquals("Excellent bulgogi.", review.text)
+            assertEquals("https://example.com/sam.jpg", review.authorPhotoUrl)
+            assertEquals(5.0, review.rating!!, 0.01)
+            val fields = server.takeRequest().requestUrl!!.queryParameter("fields").orEmpty()
+            assertTrue(fields.contains("place_id"))
+            assertTrue(fields.contains("geometry/location"))
+            assertTrue(fields.contains("reviews"))
+            assertTrue(fields.contains("name"))
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun newApiSparseDetailsAlsoMergeOntoTheListSummary() {
+        val dto = json.decodeFromString(
+            PlaceDto.serializer(),
+            """{"reviews":[{"rating":5,"text":{"text":"Nice"},"authorAttribution":{"displayName":"Sam","photoUri":"https://example.com/sam.jpg"}}]}""",
+        )
+        val details = PlaceMapper.toDetails(dto, "garys").filledFrom(hancookSummary().copy(id = "garys", name = "Gary's Kitchen"))
+        assertEquals("Gary's Kitchen", details.name)
+        assertEquals("garys", details.id)
+        assertEquals(-35.413, details.latitude, 0.0001)
+        assertEquals("Nice", details.reviews.single().text)
+        assertEquals("https://example.com/sam.jpg", details.reviews.single().authorPhotoUrl)
+    }
+
+    @Test
     fun nonOkStatusIsTheErrorNotAnEmptyPage() = runBlocking {
         val server = MockWebServer()
         server.enqueue(
@@ -158,6 +210,27 @@ class LegacyFixturePipelineTest {
         rankPreference = "RELEVANCE",
     )
 
+    private fun hancookSummary() = PlaceCandidate(
+        id = "hancook-id",
+        name = "HanCook Restaurant",
+        rating = 4.2,
+        reviewCount = 80,
+        priceLevel = null,
+        priceLabel = "Price n/a",
+        latitude = -35.413,
+        longitude = 149.094,
+        openNow = true,
+        primaryType = "restaurant",
+        typeLabel = "Restaurant",
+        address = "Wanniassa",
+        photos = emptyList(),
+        businessStatus = "OPERATIONAL",
+    )
+
     private fun fixture(name: String): String =
         javaClass.classLoader!!.getResourceAsStream(name)!!.bufferedReader().readText()
 }
+
+private const val SPARSE_DETAILS = """
+{"status":"OK","result":{"formatted_phone_number":"02 6296 1234","website":"https://hancook.example","url":"https://maps.google.com/?cid=9","reviews":[{"author_name":"Sam","profile_photo_url":"https://example.com/sam.jpg","rating":5,"text":"Excellent bulgogi.","time":1710000000,"relative_time_description":"a week ago"}]}}
+"""

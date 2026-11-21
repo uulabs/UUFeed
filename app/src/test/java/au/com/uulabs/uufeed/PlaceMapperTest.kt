@@ -25,7 +25,7 @@ class PlaceMapperTest {
     @Test
     fun mapsPriceHoursPhotosAndSortsReviewsNewestFirst() {
         val dto = json.decodeFromString(PlaceDto.serializer(), SAMPLE)
-        val details = PlaceMapper.toDetails(dto)!!
+        val details = PlaceMapper.toDetails(dto)
         assertEquals("Two Before Ten", details.name)
         assertEquals(PriceLevel.MODERATE, details.priceLevel)
         assertEquals("$$ · A$20–A$40", details.priceLabel)

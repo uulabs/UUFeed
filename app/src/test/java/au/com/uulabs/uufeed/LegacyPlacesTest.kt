@@ -53,7 +53,7 @@ class LegacyPlacesTest {
     @Test
     fun detailsJsonKeepsNewestReviewOrderAndContactFields() {
         val envelope = json.decodeFromString(LegacyEnvelope.serializer(), DETAILS)
-        val details = LegacyPlaceMapper.toDetails(envelope.result!!)!!
+        val details = LegacyPlaceMapper.toDetails(envelope.result!!)
         assertEquals("Two Before Ten", details.name)
         assertEquals("02 6162 0000", details.phone)
         assertEquals("+61 2 6162 0000", details.internationalPhone)
@@ -148,11 +148,12 @@ class LegacyPlacesTest {
             "formatted_phone_number",
             "website",
             "opening_hours",
-            "photos",
+            "photo",
             "reviews",
             "url",
-            "geometry",
-        ).forEach { field -> assertTrue(fields.contains(field)) }
+            "place_id",
+            "geometry/location",
+        ).forEach { field -> assertTrue("$field missing from $fields", fields.contains(field)) }
     }
 
     @Test
